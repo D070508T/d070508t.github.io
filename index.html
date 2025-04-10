@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" href="/static/BearTrap Logo Dark.png" type="image/png">
+    <link rel="icon" href="/BearTrap Logo Dark.png" type="image/png">
     <title>BearTrap</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
-    <link href="/static/styles.css" rel="stylesheet">
+    <link href="/styles.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
     <script>
@@ -21,11 +21,11 @@
         const logo = document.querySelector('header img');
         const favicon = document.querySelector('link[rel="icon"]');
         if (newTheme === 'dark') {
-          logo.src = '/static/BearTrap Logo Light.png';
-          favicon.href = '/static/BearTrap Logo Light.png';
+          logo.src = '/BearTrap Logo Light.png';
+          favicon.href = '/BearTrap Logo Light.png';
         } else {
-          logo.src = '/static/BearTrap Logo Dark.png';
-          favicon.href = '/static/BearTrap Logo Dark.png';
+          logo.src = '/BearTrap Logo Dark.png';
+          favicon.href = '/BearTrap Logo Dark.png';
         }
         
         // Force redraw to ensure transitions work
@@ -57,11 +57,11 @@
         const logo = document.querySelector('header img');
         const favicon = document.querySelector('link[rel="icon"]');
         if (savedTheme === 'dark') {
-          logo.src = '/static/BearTrap Logo Light.png';
-          favicon.href = '/static/BearTrap Logo Light.png';
+          logo.src = '/BearTrap Logo Light.png';
+          favicon.href = '/BearTrap Logo Light.png';
         } else {
-          logo.src = '/static/BearTrap Logo Dark.png';
-          favicon.href = '/static/BearTrap Logo Dark.png';
+          logo.src = '/BearTrap Logo Dark.png';
+          favicon.href = '/BearTrap Logo Dark.png';
         }
         
         updateThemeButton();
@@ -73,7 +73,7 @@
     <!-- Header -->
     <header class="flex justify-between items-center p-4 shadow-md" style="background-color: var(--header-bg); color: var(--header-text);">
       <div class="flex items-center">
-        <img src="/static/BearTrap Logo Dark.png" alt="BearTrap Logo" class="h-8 mr-2">
+        <img src="/BearTrap Logo Dark.png" alt="BearTrap Logo" class="h-8 mr-2">
         <span class="text-2xl font-bold">BearTrap</span>
       </div>
       <label class="relative inline-flex items-center cursor-pointer">
