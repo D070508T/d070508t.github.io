@@ -1,10 +1,288 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" data-bs-theme="light">
   <head>
-    <title>Welcome to My Site</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/static/BearTrap Logo Dark.png" type="image/png">
+    <title>BearTrap</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+    <link href="/static/styles.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <script>
+      function toggleTheme() {
+        const html = document.documentElement;
+        const isDark = html.getAttribute('data-bs-theme') === 'dark';
+        const newTheme = isDark ? 'light' : 'dark';
+        
+        html.setAttribute('data-bs-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        
+        const logo = document.querySelector('header img');
+        const favicon = document.querySelector('link[rel="icon"]');
+        if (newTheme === 'dark') {
+          logo.src = '/static/BearTrap Logo Light.png';
+          favicon.href = '/static/BearTrap Logo Light.png';
+        } else {
+          logo.src = '/static/BearTrap Logo Dark.png';
+          favicon.href = '/static/BearTrap Logo Dark.png';
+        }
+        
+        // Force redraw to ensure transitions work
+        document.body.style.display = 'none';
+        document.body.offsetHeight; // Trigger reflow
+        document.body.style.display = '';
+        
+        updateThemeButton();
+      }
+
+      function updateThemeButton() {
+        const btn = document.getElementById('themeToggle');
+        const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+        const checkbox = document.getElementById('themeToggle');
+        const sunIcon = document.getElementById('sunIcon');
+        const moonIcon = document.getElementById('moonIcon');
+        const slider = document.querySelector('.peer');
+        
+        checkbox.checked = isDark;
+        sunIcon.style.opacity = isDark ? '0.3' : '1';
+        moonIcon.style.opacity = isDark ? '1' : '0.3';
+        slider.style.backgroundColor = isDark ? 'rgb(55, 65, 81)' : 'rgb(229, 231, 235)';
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-bs-theme', savedTheme);
+        
+        const logo = document.querySelector('header img');
+        const favicon = document.querySelector('link[rel="icon"]');
+        if (savedTheme === 'dark') {
+          logo.src = '/static/BearTrap Logo Light.png';
+          favicon.href = '/static/BearTrap Logo Light.png';
+        } else {
+          logo.src = '/static/BearTrap Logo Dark.png';
+          favicon.href = '/static/BearTrap Logo Dark.png';
+        }
+        
+        updateThemeButton();
+      });
+    </script>
   </head>
-  <body>
-    <h1>Hello! I'm David</h1>
-    <p>This is my personal GitHub Pages website.</p>
+
+  <body class="transition-colors duration-300">
+    <!-- Header -->
+    <header class="flex justify-between items-center p-4 shadow-md" style="background-color: var(--header-bg); color: var(--header-text);">
+      <div class="flex items-center">
+        <img src="/static/BearTrap Logo Dark.png" alt="BearTrap Logo" class="h-8 mr-2">
+        <span class="text-2xl font-bold">BearTrap</span>
+      </div>
+      <label class="relative inline-flex items-center cursor-pointer">
+        <input type="checkbox" id="themeToggle" class="sr-only peer" onclick="toggleTheme()">
+        <div class="w-14 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 flex items-center justify-between px-1">
+          <i id="sunIcon" class="bi bi-sun-fill text-yellow-500 text-sm"></i>
+          <i id="moonIcon" class="bi bi-moon-fill text-blue-500 text-sm"></i>
+        </div>
+      </label>
+    </header>
+
+    <!-- Page Layout -->
+    <div class="grid grid-cols-12 min-h-screen">
+      <!-- Sidebar -->
+      <aside class="col-span-2 p-4 space-y-4 border-r border-opacity-20 border-white" style="background-color: var(--sidebar-bg); color: var(--sidebar-text);">
+        <div class="space-y-2">
+          <!-- Stock Cards -->
+          {% set logo_map = {
+            'AAPL': 'apple.com',
+            'MSFT': 'microsoft.com', 
+            'TSLA': 'tesla.com',
+            'NVDA': 'nvidia.com'
+          } %}
+          {% for ticker, change in stock_changes.items() %}
+          <div class="sidebar-card flex items-center space-x-3">
+            {% if ticker in logo_map %}
+            <img src="https://logo.clearbit.com/{{ logo_map[ticker] }}?size=128&format=png&greyscale=true" class="w-8 h-8" />
+            {% else %}
+            <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+              <span class="text-xs font-bold">{{ ticker }}</span>
+            </div>
+            {% endif %}
+            <div>
+              <div class="font-medium">{{ ticker }}</div>
+              <div class="text-sm {% if change and change > 0 %}text-green-500{% elif change and change < 0 %}text-red-500{% endif %}">
+                {% if change is not none %}
+                  {{ "%+.2f"|format(change) }}%
+                {% else %}
+                  N/A
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="col-span-7 p-6 border-r border-opacity-20 border-white">
+        <div class="p-6 rounded shadow-md border" style="background-color: var(--card-bg); border-color: var(--card-border);">
+          <h2 class="text-xl font-bold mb-4">Stock Lookup</h2>
+
+          <div id="formContainer">
+            <form id="stockForm" action="/" method="post" class="space-y-4">
+            <!-- Ticker Input -->
+            <div>
+              <label for="ticker" class="block text-sm font-medium mb-1">Stock Ticker Symbol</label>
+              <input type="text" id="ticker" name="ticker" placeholder="e.g. AAPL, MSFT, TSLA" required
+                class="w-full p-2 rounded border"
+                style="background-color: var(--input-bg); border-color: var(--input-border); color: var(--text-color);" />
+            </div>
+
+            <!-- Selects: Period + Analysis -->
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label for="period" class="block text-sm font-medium mb-1">Time Period</label>
+                <select id="period" name="period" class="w-full p-2 rounded border"
+                  style="background-color: var(--input-bg); border-color: var(--input-border); color: var(--text-color);">
+                  <option value="1d">1 Day</option>
+                  <option value="5d">5 Days</option>
+                  <option value="1mo" selected>1 Month</option>
+                  <option value="3mo">3 Months</option>
+                  <option value="6mo">6 Months</option>
+                  <option value="1y">1 Year</option>
+                  <option value="2y">2 Years</option>
+                  <option value="5y">5 Years</option>
+                  <option value="10y">10 Years</option>
+                  <option value="ytd">Year to Date</option>
+                  <option value="max">Max</option>
+                </select>
+              </div>
+              <div>
+                <label for="ma_strength" class="block text-sm font-medium mb-1">MA Strength</label>
+                <input type="number" id="ma_strength" name="ma_strength" value="25" min="1" max="50"
+                  class="w-full p-2 rounded border"
+                  style="background-color: var(--input-bg); border-color: var(--input-border); color: var(--text-color);" />
+              </div>
+            </div>
+
+            <!-- MA, RSI, Lookback -->
+            <div class="grid grid-cols-3 gap-4">
+              <div>
+                <label for="ma_window" class="block text-sm font-medium mb-1">MA Window</label>
+                <input type="number" id="ma_window" name="ma_window" value="25" min="5" max="100"
+                  class="w-full p-2 rounded border"
+                  style="background-color: var(--input-bg); border-color: var(--input-border); color: var(--text-color);" />
+              </div>
+              <div>
+                <label for="rsi_strength" class="block text-sm font-medium mb-1">RSI Strength</label>
+                <input type="number" id="rsi_strength" name="rsi_strength" value="7" min="1" max="20"
+                  class="w-full p-2 rounded border"
+                  style="background-color: var(--input-bg); border-color: var(--input-border); color: var(--text-color);" />
+              </div>
+              <div>
+                <label for="lookback" class="block text-sm font-medium mb-1">Lookback Period</label>
+                <input type="number" id="lookback" name="lookback" value="5" min="1" max="20"
+                  class="w-full p-2 rounded border"
+                  style="background-color: var(--input-bg); border-color: var(--input-border); color: var(--text-color);" />
+              </div>
+            </div>
+
+            <!-- RSI Thresholds -->
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label for="rsi_low" class="block text-sm font-medium mb-1">RSI Low Threshold</label>
+                <input type="number" id="rsi_low" name="rsi_low" value="36" min="10" max="50"
+                  class="w-full p-2 rounded border"
+                  style="background-color: var(--input-bg); border-color: var(--input-border); color: var(--text-color);" />
+              </div>
+              <div>
+                <label for="rsi_high" class="block text-sm font-medium mb-1">RSI High Threshold</label>
+                <input type="number" id="rsi_high" name="rsi_high" value="68" min="50" max="90"
+                  class="w-full p-2 rounded border"
+                  style="background-color: var(--input-bg); border-color: var(--input-border); color: var(--text-color);" />
+              </div>
+            </div>
+
+            <button type="submit" class="px-4 py-2 rounded border mt-4"
+              style="background-color: var(--input-bg); color: var(--text-color); border-color: var(--input-border);">
+              Analyze
+            </button>
+            </form>
+          </div>
+          
+          <div id="chartContainer" class="hidden">
+            <div id="stockChart">{{ results.charts.stock_chart|safe if results and results.charts else '' }}</div>
+            <div id="rsiChart">{{ results.charts.rsi_chart|safe if results and results.charts else '' }}</div>
+            <button onclick="resetForm()" class="px-4 py-2 rounded border mt-4"
+              style="background-color: var(--input-bg); color: var(--text-color); border-color: var(--input-border);">
+              Back to Form
+            </button>
+          </div>
+        </div>
+
+        <script>
+          document.getElementById('stockForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            
+            fetch('/', {
+              method: 'POST',
+              body: formData
+            })
+            .then(response => {
+                console.log("Response received:", response);
+                return response.text();
+            })
+            .then(html => {
+              // Create temporary DOM to parse response
+              const parser = new DOMParser();
+              const doc = parser.parseFromString(html, 'text/html');
+              
+              // Extract charts from response
+              const stockChart = doc.querySelector('#stockChart');
+              const rsiChart = doc.querySelector('#rsiChart');
+              
+              if (stockChart && rsiChart) {
+                // Hide form and show charts
+                document.getElementById('formContainer').classList.add('hidden');
+                document.getElementById('chartContainer').classList.remove('hidden');
+                
+                // Insert charts
+                document.getElementById('stockChart').innerHTML = stockChart.innerHTML;
+                document.getElementById('rsiChart').innerHTML = rsiChart.innerHTML;
+              }
+            });
+          });
+          
+          function resetForm() {
+            location.reload();
+          }
+        </script>
+      </main>
+
+      <!-- Right Column - Split into 3 Rows -->
+      <aside class="col-span-3 p-4 space-y-4" id="right-column">
+
+        <!-- Row 2: Prediction -->
+        <div class="p-4 rounded shadow border" style="background-color: var(--card-bg); border-color: var(--card-border);">
+          <h3 class="text-xl font-bold mb-3">Prediction</h3>
+          <p class="text-2xl {% if results and results.stock_data and results.stock_data.prediction > 50 %}text-green-500{% else %}text-red-500{% endif %}">
+          {{ results.stock_data.prediction if results and results.stock_data and results.stock_data.prediction else 'N/A' }}
+          </p>
+          <p class="text-lg mt-3">Current price: ${{ current_price }}</p>
+        </div>
+
+        <!-- Row 3: News -->
+        <div class="p-4 rounded shadow border" style="background-color: var(--card-bg); border-color: var(--card-border);">
+          <h3 class="text-xl font-bold mb-3">Latest News</h3>
+          <p>{% if title %}{{ title }}{% else %}No news available{% endif %}</p>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Optional JS Utilities -->
+    <script>
+      function resetForm() {
+        location.reload();
+      }
+    </script>
   </body>
 </html>
