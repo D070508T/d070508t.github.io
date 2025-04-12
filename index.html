@@ -77,6 +77,8 @@
     omega += (g/length) * Math.sin(theta) * dt;
     omega -= acceleration * (centerOfMass ? centerOfMass : 0.003) * Math.cos(theta);
     theta += omega + dt;
+
+    if (pivotX >= canvas.width || pivotX <= 0) reset();
   }
 
   function draw() {
@@ -112,6 +114,11 @@
     ctx.lineWidth = 10;
     ctx.strokeStyle = "blue";
     ctx.stroke();
+  }
+
+  function reset() {
+    theta = 0.01;
+    omega = 0;
   }
 
   function loop() {
