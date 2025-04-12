@@ -29,30 +29,6 @@
   const canvas = document.getElementById("canvas");
   const ctx = canvas.getContext("2d");
 
-  function resizeCanvas() {
-    // Get actual display size
-    const displayWidth = window.innerWidth*0.8;
-    const displayHeight = window.innerHeight*0.4;
-
-    // Set CSS dimensions
-    canvas.style.width = displayWidth + 'px';
-    canvas.style.height = displayHeight + 'px';
-
-    // Set actual drawing buffer size (adjusting for device pixel ratio)
-    const scale = window.devicePixelRatio || 1;
-    canvas.width = Math.floor(displayWidth * scale);
-    canvas.height = Math.floor(displayHeight * scale);
-
-    // Scale context to match
-    ctx.scale(scale, scale);
-
-    // Redraw your content here if needed
-  }
-
-  // Initial setup
-  resizeCanvas();
-  window.addEventListener('resize', resizeCanvas);
-
   const g = 10;
   const length = canvas.height / 3;
   const dt = 0.036;
