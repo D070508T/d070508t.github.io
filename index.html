@@ -21,6 +21,7 @@
 <button id="flickLeft">Flick Left</button>
 <button id="flickRight">Flick Right</button>
 <br>
+<button id="reset">Reset</button>
 <canvas id="canvas" width="800" height="500" style="border: 2px solid black;"></canvas>
 
 <script>
@@ -59,6 +60,9 @@
   let flickRight = document.getElementById('flickRight');
   flickLeft.addEventListener('click', () => {theta = 2*Math.PI - Math.PI/4});
   flickRight.addEventListener('click', () => {theta = Math.PI/4});
+
+  let reset_btn = document.getElementById('reset');
+  reset_btn.addEventListener('click', () => {reset()});
 
   function changeAcceleration() {
     const p = parseFloat(kP.value) || 0;  // If the value is empty, set to 0
