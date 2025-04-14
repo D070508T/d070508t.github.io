@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
   <title>Broom Physics Simulation</title>
-
 </head>
 
 <body>
@@ -26,7 +26,13 @@
 <br>
 <button id="reset">Reset</button>
 <br>
-<canvas id="canvas" width="1500" height="500" style="border: 2px solid black;"></canvas>
+<canvas id="canvas" width="600" height="300" style="border: 2px solid black;"></canvas>
+<div id="chart" style="
+  position: fixed;
+  right: 10px;
+  padding: 10px;
+  border: 1px solid black;
+"></div>
 
 <div id="pidDisplay" style="
     position: fixed;
@@ -43,9 +49,9 @@
   COM: <span id="COMValue">0</span>
   <br>
   Good values:
-  kP: 0.139,
+  kP: 0.035,
   kI: 0,
-  kD: 0.00301,
+  kD: 0.00353,
 </div>
 
 <script>
@@ -53,7 +59,7 @@
   const ctx = canvas.getContext("2d");
 
   const g = 3;
-  const length = canvas.height / 3;
+  const length = canvas.height / 2;
   const dt = 0.005;
 
   let theta = 0.01;
@@ -97,8 +103,8 @@
 
   let flickLeft = document.getElementById('flickLeft');
   let flickRight = document.getElementById('flickRight');
-  flickLeft.addEventListener('click', () => {theta = 2*Math.PI - 0.1});
-  flickRight.addEventListener('click', () => {theta = 0.1});
+  flickLeft.addEventListener('click', () => {theta = 2*Math.PI - 0.3});
+  flickRight.addEventListener('click', () => {theta = 0.3});
 
   let reset_btn = document.getElementById('reset');
   reset_btn.addEventListener('click', () => {reset()});
@@ -124,7 +130,6 @@
 
     pivotX += acceleration;
 
-    console.log(Math.sin(theta))
     omega += (g/length) * Math.sin(theta) * 100 * dt;
     omega -= acceleration * (centerOfMass ? centerOfMass : 0.001) * Math.cos(theta);
     theta += omega + dt;
@@ -183,11 +188,93 @@
     requestAnimationFrame(updatePIDDisplay);
   }
 
+  let errorHistory = [];
+  let integralHistory = [];
+  let derivativeHistory = [];
+
+  Plotly.newPlot('chart', [
+    {
+      y: errorHistory,
+      type: 'line',
+      line: {color: '#FF0000'},
+      name: 'Error'
+    },
+    {
+      y: integralHistory,
+      type: 'line',
+      line: {color: '#2d9d15'},
+      name: 'Integral'
+    },
+    {
+      y: derivativeHistory,
+      type: 'line',
+      line: {color: '#001aff'},
+      name: 'Derivative'
+    }
+  ], {
+    title: 'Error Over Time',
+    yaxis: {title: 'Error Value'},
+    // Disable all interactivity:
+    staticPlot: true,          // Turns off all interactivity
+    displayModeBar: false,     // Hides the toolbar
+    displaylogo: false,        // Hides the Plotly logo
+    scrollZoom: false,         // Disables zoom via scrolling
+    doubleClick: false         // Disables double-click reset
+  });
+
+  function updatePlot() {
+    // Add new data points
+    errorHistory.push(error);
+    integralHistory.push(errorSum);
+    derivativeHistory.push((previous_error - error) / dt);
+
+    // Maintain fixed length
+    if (errorHistory.length > 200) {
+      errorHistory.shift();
+      integralHistory.shift();
+      derivativeHistory.shift();
+    }
+
+    // Update plot
+    Plotly.react('chart', [
+      {
+        y: errorHistory,
+        type: 'line',
+        line: {color: '#FF0000'},
+        name: 'Error'
+      },
+      // {
+      //   y: integralHistory,
+      //   type: 'line',
+      //   line: {color: '#2d9d15'},
+      //   name: 'Integral'
+      // },
+      // {
+      //   y: derivativeHistory,
+      //   type: 'line',
+      //   line: {color: '#001aff'},
+      //   name: 'Derivative'
+      // }
+    ], {}, [0, 1, 2]);
+  }
+
+  let count = 0;
+
+  setInterval(function(){
+    Plotly.extendTraces('chart', {y:[[error]]}, [0]);
+    cnt++;
+
+    if (cnt > 500) {
+      Plotly.relayout('chart', {
+        xaxis: {range: [cnt-500, cnt]}
+      });
+    }
+  })
+
   function loop() {
-    console.log(`error: ${error}`)
-    console.log(`error sum: ${errorSum}`)
     updatePhysics();
     draw();
+    updatePlot();
     requestAnimationFrame(loop);
   }
 
