@@ -12,26 +12,49 @@
 <label for="kP">kP:</label>
 <input type="range" id="kP" value="0" step="0.001" min="0" max="1">
 <br>
+<label for="kI">kI:</label>
+<input type="range" id="kI" value="0" step="0.001" min="0" max="0.5">
+<br>
 <label for="kD">kD:</label>
-<input type="range" id="kD" value="0" step="0.001" min="0" max="0.05">
+<input type="range" id="kD" value="0" step="0.00001" min="0" max="0.01">
 <br>
 <label for="COM">CENTER OF MASS:</label>
-<input type="range" id="COM" value="0.003" step="0.0002" min="0" max="0.01" size="100">
+<input type="range" id="COM" value="0" step="0.000001" min="0" max="0.001">
 <br>
 <button id="flickLeft">Flick Left</button>
 <button id="flickRight">Flick Right</button>
 <br>
 <button id="reset">Reset</button>
 <br>
-<canvas id="canvas" width="800" height="400" style="border: 2px solid black;"></canvas>
+<canvas id="canvas" width="1500" height="500" style="border: 2px solid black;"></canvas>
+
+<div id="pidDisplay" style="
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    background: white;
+    padding: 10px;
+    border: 1px solid black;
+    font-family: monospace;
+">
+  kP: <span id="kPValue">0</span><br>
+  kI: <span id="kIValue">0</span><br>
+  kD: <span id="kDValue">0</span><br>
+  COM: <span id="COMValue">0</span>
+  <br>
+  Good values:
+  kP: 0.139,
+  kI: 0,
+  kD: 0.00301,
+</div>
 
 <script>
   const canvas = document.getElementById("canvas");
   const ctx = canvas.getContext("2d");
 
-  const g = 10;
+  const g = 3;
   const length = canvas.height / 3;
-  const dt = 0.036;
+  const dt = 0.005;
 
   let theta = 0.01;
   let omega = 0;
@@ -46,41 +69,64 @@
 
   let error = 0;
   let previous_error = 0;
+  let errorSum = 0;  // For integral term accumulation
 
   let centerOfMass;
 
   let kP = document.getElementById('kP');
-  kP.addEventListener('input', changeAcceleration);
+  kP.addEventListener('input', () => {
+    changeAcceleration();
+    updatePIDDisplay();
+  });
+  let kI = document.getElementById('kI');
+  kI.addEventListener('input', () => {
+    changeAcceleration();
+    updatePIDDisplay();
+  });
   let kD = document.getElementById('kD');
-  kD.addEventListener('input', changeAcceleration);
+  kD.addEventListener('input', () => {
+    changeAcceleration();
+    updatePIDDisplay();
+  });
 
   let COM = document.getElementById('COM');
-  COM.addEventListener('input', () => {centerOfMass = parseFloat(COM.value)});
+  COM.addEventListener('input', () => {
+    centerOfMass = parseFloat(COM.value);
+    updatePIDDisplay();
+  });
 
   let flickLeft = document.getElementById('flickLeft');
   let flickRight = document.getElementById('flickRight');
-  flickLeft.addEventListener('click', () => {theta = 2*Math.PI - Math.PI/4});
-  flickRight.addEventListener('click', () => {theta = Math.PI/4});
+  flickLeft.addEventListener('click', () => {theta = 2*Math.PI - 0.1});
+  flickRight.addEventListener('click', () => {theta = 0.1});
 
   let reset_btn = document.getElementById('reset');
   reset_btn.addEventListener('click', () => {reset()});
 
   function changeAcceleration() {
+    errorSum += error * dt;
     const p = parseFloat(kP.value) || 0;  // If the value is empty, set to 0
+    const i = parseFloat(kI.value) || 0;
     const d = parseFloat(kD.value) || 0;  // Same for kD
 
     acceleration = -(
             p*error +
+            i*errorSum +
             d*(error - previous_error) / dt);
   }
 
   function updatePhysics() {
+    if (Math.round(pivotX * 100)/100 === canvas.width/2) {
+      errorSum = 0;
+    }
+
     changeAcceleration();
 
     pivotX += acceleration;
 
-    omega += (g/length) * Math.sin(theta) * dt;
-    omega -= acceleration * (centerOfMass ? centerOfMass : 0.003) * Math.cos(theta);
+    console.log(Math.sin(theta))
+    omega += (g/length) * Math.sin(theta) * 100 * dt;
+    omega -= acceleration * (centerOfMass ? centerOfMass : 0.001) * Math.cos(theta);
     theta += omega + dt;
 
     if (pivotX >= canvas.width || pivotX <= 0) reset();
@@ -126,9 +172,20 @@
     omega = 0;
     pivotX = canvas.width / 2;
     tipX = canvas.width / 2;
+    errorSum = 0;
+  }
+
+  function updatePIDDisplay() {
+    document.getElementById('kPValue').textContent = kP.value;
+    document.getElementById('kIValue').textContent = kI.value;
+    document.getElementById('kDValue').textContent = kD.value;
+    document.getElementById('COMValue').textContent = centerOfMass;
+    requestAnimationFrame(updatePIDDisplay);
   }
 
   function loop() {
+    console.log(`error: ${error}`)
+    console.log(`error sum: ${errorSum}`)
     updatePhysics();
     draw();
     requestAnimationFrame(loop);
