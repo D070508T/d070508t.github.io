@@ -1,284 +1,312 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
-  <title>Broom Physics Simulation</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" type="text/css" href="styles.css">
+    <title>Broom Physics Simulation</title>
 </head>
 
 <body>
 
-<label for="kP">kP:</label>
-<input type="range" id="kP" value="0" step="0.001" min="0" max="1">
-<br>
-<label for="kI">kI:</label>
-<input type="range" id="kI" value="0" step="0.001" min="0" max="0.5">
-<br>
-<label for="kD">kD:</label>
-<input type="range" id="kD" value="0" step="0.00001" min="0" max="0.01">
-<br>
-<label for="COM">CENTER OF MASS:</label>
-<input type="range" id="COM" value="0" step="0.000001" min="0" max="0.001">
-<br>
-<button id="flickLeft">Flick Left</button>
-<button id="flickRight">Flick Right</button>
-<br>
-<button id="reset">Reset</button>
-<br>
-<canvas id="canvas" width="600" height="300" style="border: 2px solid black;"></canvas>
-<div id="chart" style="
-  position: fixed;
-  right: 10px;
-  padding: 10px;
-  border: 1px solid black;
-"></div>
-
-<div id="pidDisplay" style="
-    position: fixed;
-    bottom: 10px;
-    left: 10px;
-    background: white;
-    padding: 10px;
-    border: 1px solid black;
-    font-family: monospace;
-">
-  kP: <span id="kPValue">0</span><br>
-  kI: <span id="kIValue">0</span><br>
-  kD: <span id="kDValue">0</span><br>
-  COM: <span id="COMValue">0</span>
-  <br>
-  Good values:
-  kP: 0.035,
-  kI: 0,
-  kD: 0.00353,
+<div class="controls">
+    <h1 class="title">WELCOME TO D070508T's PID CONTROLLER</h1>
+    <div class="pid-controller" style="
+         background: white;
+         height: 300px;
+         padding: 10px;
+         border: 1px solid black;">
+        <div class="proportional">
+            <label for="kP">kP:</label>
+            <input type="range" id="kP" value="0" step="0.001" min="0" max="1">
+            kP: <span id="kPValue">0</span>
+        </div>
+        <br>
+        <div class="integral">
+            <label for="kI">kI:</label>
+            <input type="range" id="kI" value="0" step="0.001" min="0" max="0.5">
+            kI: <span id="kIValue">0</span>
+        </div>
+        <br>
+        <div class="derivative">
+            <label for="kD">kD:</label>
+            <input type="range" id="kD" value="0" step="0.00001" min="0" max="0.01">
+            kD: <span id="kDValue">0</span>
+        </div>
+        <br>
+        <div class="flick_reset">
+            <button id="flickLeft">Flick Left</button>
+            <button id="flickRight">Flick Right</button>
+            <br>
+            <button id="reset">Reset</button>
+            <br>
+            <div class="center_of_mass">
+                <label for="COM">CENTER OF MASS:</label>
+                <input type="range" id="COM" value="0" step="0.000001" min="0" max="0.001">
+                COM: <span id="COMValue">0</span>
+            </div>
+        </div>
+    </div>
+    <div style="border: 1px solid black;">
+        <div id="chart" style="height: 100%"></div>
+    </div>
+    <pre class="info">
+        sdfsdfsdfsdf
+        dsfsd
+        fsdf
+        sdfsdfsdfsdf
+        fsd
+        fsdf
+    </pre>
+    <canvas id="canvas" style="border: 2px solid black; width: 90%; height: 100%; display: block;"></canvas>
 </div>
+<br>
 
 <script>
-  const canvas = document.getElementById("canvas");
-  const ctx = canvas.getContext("2d");
+    function resizeCanvasToDisplaySize(canvas) {
+        const rect = canvas.getBoundingClientRect();
+        const width = Math.floor(rect.width);
+        const height = Math.floor(rect.height);
 
-  const g = 3;
-  const length = canvas.height / 2;
-  const dt = 0.005;
-
-  let theta = 0.01;
-  let omega = 0;
-
-  let tipX = canvas.width / 2;
-  let tipY = canvas.height / 2 - length;
-
-  let pivotX = canvas.width / 2;
-  let pivotY = canvas.height / 2;
-
-  let acceleration = 0;
-
-  let error = 0;
-  let previous_error = 0;
-  let errorSum = 0;  // For integral term accumulation
-
-  let centerOfMass;
-
-  let kP = document.getElementById('kP');
-  kP.addEventListener('input', () => {
-    changeAcceleration();
-    updatePIDDisplay();
-  });
-  let kI = document.getElementById('kI');
-  kI.addEventListener('input', () => {
-    changeAcceleration();
-    updatePIDDisplay();
-  });
-  let kD = document.getElementById('kD');
-  kD.addEventListener('input', () => {
-    changeAcceleration();
-    updatePIDDisplay();
-  });
-
-  let COM = document.getElementById('COM');
-  COM.addEventListener('input', () => {
-    centerOfMass = parseFloat(COM.value);
-    updatePIDDisplay();
-  });
-
-  let flickLeft = document.getElementById('flickLeft');
-  let flickRight = document.getElementById('flickRight');
-  flickLeft.addEventListener('click', () => {theta = 2*Math.PI - 0.3});
-  flickRight.addEventListener('click', () => {theta = 0.3});
-
-  let reset_btn = document.getElementById('reset');
-  reset_btn.addEventListener('click', () => {reset()});
-
-  function changeAcceleration() {
-    errorSum += error * dt;
-    const p = parseFloat(kP.value) || 0;  // If the value is empty, set to 0
-    const i = parseFloat(kI.value) || 0;
-    const d = parseFloat(kD.value) || 0;  // Same for kD
-
-    acceleration = -(
-            p*error +
-            i*errorSum +
-            d*(error - previous_error) / dt);
-  }
-
-  function updatePhysics() {
-    if (Math.round(pivotX * 100)/100 === canvas.width/2) {
-      errorSum = 0;
+        // Only resize if necessary
+        if (canvas.width !== width || canvas.height !== height) {
+            canvas.width = width;
+            canvas.height = height;
+        }
     }
 
-    changeAcceleration();
+    const canvas = document.getElementById('canvas');
 
-    pivotX += acceleration;
+    // Resize once on startup
+    resizeCanvasToDisplaySize(canvas);
 
-    omega += (g/length) * Math.sin(theta) * 100 * dt;
-    omega -= acceleration * (centerOfMass ? centerOfMass : 0.001) * Math.cos(theta);
-    theta += omega + dt;
+    // Resize every time the window is resized
+    window.addEventListener('resize', () => resizeCanvasToDisplaySize(canvas));
 
-    if (pivotX >= canvas.width || pivotX <= 0) reset();
-  }
+    const ctx = canvas.getContext("2d");
 
-  function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const g = 3;
+    const length = canvas.height / 2;
+    const dt = 0.005;
 
-    previous_error = pivotX - tipX;
+    let theta = 0.01;
+    let omega = 0;
 
-    tipX = pivotX + length * Math.sin(theta);
-    tipY = pivotY - length * Math.cos(theta);
+    let tipX = canvas.width / 2;
+    let tipY = canvas.height / 2 - length;
 
-    error = pivotX - tipX;
+    let pivotX = canvas.width / 2;
+    let pivotY = canvas.height / 2;
 
-    ctx.beginPath();
-    ctx.moveTo(0, canvas.height/2);
-    ctx.lineTo(canvas.width, canvas.height/2);
-    ctx.strokeStyle = "black";
-    ctx.lineWidth = 2;
-    ctx.stroke();
+    let acceleration = 0;
 
-    // Draw the cart (square at pivot point)
-    const cartSize = 20; // Size of the square in pixels
-    ctx.fillStyle = "red"; // Cart color
-    ctx.fillRect(
-            pivotX - cartSize/2, // X position (centered)
-            pivotY - cartSize/2, // Y position (centered)
+    let error = 0;
+    let previous_error = 0;
+    let errorSum = 0;  // For integral term accumulation
+
+    let centerOfMass;
+
+    let kP = document.getElementById('kP');
+    kP.addEventListener('input', () => {
+        changeAcceleration();
+        updatePIDDisplay();
+    });
+    let kI = document.getElementById('kI');
+    kI.addEventListener('input', () => {
+        changeAcceleration();
+        updatePIDDisplay();
+    });
+    let kD = document.getElementById('kD');
+    kD.addEventListener('input', () => {
+        changeAcceleration();
+        updatePIDDisplay();
+    });
+
+    let COM = document.getElementById('COM');
+    COM.addEventListener('input', () => {
+        centerOfMass = parseFloat(COM.value);
+        updatePIDDisplay();
+    });
+
+    let flickLeft = document.getElementById('flickLeft');
+    let flickRight = document.getElementById('flickRight');
+    flickLeft.addEventListener('click', () => {
+        theta = 2 * Math.PI - 0.3
+    });
+    flickRight.addEventListener('click', () => {
+        theta = 0.3
+    });
+
+    let reset_btn = document.getElementById('reset');
+    reset_btn.addEventListener('click', () => {
+        reset()
+    });
+
+    function changeAcceleration() {
+        errorSum += error * dt;
+        const p = parseFloat(kP.value) || 0;  // If the value is empty, set to 0
+        const i = parseFloat(kI.value) || 0;
+        const d = parseFloat(kD.value) || 0;  // Same for kD
+
+        acceleration = -(
+            p * error +
+            i * errorSum +
+            d * (error - previous_error) / dt);
+    }
+
+    function updatePhysics() {
+        if (Math.round(pivotX * 100) / 100 === canvas.width / 2) {
+            errorSum = 0;
+        }
+
+        changeAcceleration();
+
+        pivotX += acceleration;
+
+        omega += (g / length) * Math.sin(theta) * 100 * dt;
+        omega -= acceleration * (centerOfMass ? centerOfMass : 0.001) * Math.cos(theta);
+        theta += omega + dt;
+
+        if (pivotX >= canvas.width || pivotX <= 0) reset();
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        previous_error = pivotX - tipX;
+
+        tipX = pivotX + length * Math.sin(theta);
+        tipY = pivotY - length * Math.cos(theta);
+
+        error = pivotX - tipX;
+
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height / 2);
+        ctx.lineTo(canvas.width, canvas.height / 2);
+        ctx.strokeStyle = "black";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Draw the cart (square at pivot point)
+        const cartSize = 20; // Size of the square in pixels
+        ctx.fillStyle = "red"; // Cart color
+        ctx.fillRect(
+            pivotX - cartSize / 2, // X position (centered)
+            pivotY - cartSize / 2, // Y position (centered)
             cartSize,
             cartSize
-    );
+        );
 
-    ctx.beginPath();
-    ctx.moveTo(pivotX, pivotY);
-    ctx.lineTo(tipX, tipY);
-    ctx.lineWidth = 10;
-    ctx.strokeStyle = "blue";
-    ctx.stroke();
-  }
-
-  function reset() {
-    theta = 0.01;
-    omega = 0;
-    pivotX = canvas.width / 2;
-    tipX = canvas.width / 2;
-    errorSum = 0;
-  }
-
-  function updatePIDDisplay() {
-    document.getElementById('kPValue').textContent = kP.value;
-    document.getElementById('kIValue').textContent = kI.value;
-    document.getElementById('kDValue').textContent = kD.value;
-    document.getElementById('COMValue').textContent = centerOfMass;
-    requestAnimationFrame(updatePIDDisplay);
-  }
-
-  let errorHistory = [];
-  let integralHistory = [];
-  let derivativeHistory = [];
-
-  Plotly.newPlot('chart', [
-    {
-      y: errorHistory,
-      type: 'line',
-      line: {color: '#FF0000'},
-      name: 'Error'
-    },
-    {
-      y: integralHistory,
-      type: 'line',
-      line: {color: '#2d9d15'},
-      name: 'Integral'
-    },
-    {
-      y: derivativeHistory,
-      type: 'line',
-      line: {color: '#001aff'},
-      name: 'Derivative'
-    }
-  ], {
-    title: 'Error Over Time',
-    yaxis: {title: 'Error Value'},
-    // Disable all interactivity:
-    staticPlot: true,          // Turns off all interactivity
-    displayModeBar: false,     // Hides the toolbar
-    displaylogo: false,        // Hides the Plotly logo
-    scrollZoom: false,         // Disables zoom via scrolling
-    doubleClick: false         // Disables double-click reset
-  });
-
-  function updatePlot() {
-    // Add new data points
-    errorHistory.push(error);
-    integralHistory.push(errorSum);
-    derivativeHistory.push((previous_error - error) / dt);
-
-    // Maintain fixed length
-    if (errorHistory.length > 200) {
-      errorHistory.shift();
-      integralHistory.shift();
-      derivativeHistory.shift();
+        ctx.beginPath();
+        ctx.moveTo(pivotX, pivotY);
+        ctx.lineTo(tipX, tipY);
+        ctx.lineWidth = 10;
+        ctx.strokeStyle = "blue";
+        ctx.stroke();
     }
 
-    // Update plot
-    Plotly.react('chart', [
-      {
-        y: errorHistory,
-        type: 'line',
-        line: {color: '#FF0000'},
-        name: 'Error'
-      },
-      // {
-      //   y: integralHistory,
-      //   type: 'line',
-      //   line: {color: '#2d9d15'},
-      //   name: 'Integral'
-      // },
-      // {
-      //   y: derivativeHistory,
-      //   type: 'line',
-      //   line: {color: '#001aff'},
-      //   name: 'Derivative'
-      // }
-    ], {}, [0, 1, 2]);
-  }
-
-  let cnt = 0;
-
-  setInterval(function(){
-    Plotly.extendTraces('chart', {y:[[error]]}, [0]);
-    cnt++;
-
-    if (cnt > 500) {
-      Plotly.relayout('chart', {
-        xaxis: {range: [cnt-500, cnt]}
-      });
+    function reset() {
+        theta = 0.01;
+        omega = 0;
+        pivotX = canvas.width / 2;
+        tipX = canvas.width / 2;
+        errorSum = 0;
     }
-  })
 
-  function loop() {
-    updatePhysics();
-    draw();
-    updatePlot();
-    requestAnimationFrame(loop);
-  }
+    function updatePIDDisplay() {
+        document.getElementById('kPValue').textContent = kP.value;
+        document.getElementById('kIValue').textContent = kI.value;
+        document.getElementById('kDValue').textContent = kD.value;
+        document.getElementById('COMValue').textContent = centerOfMass;
+        requestAnimationFrame(updatePIDDisplay);
+    }
 
-  loop();
+    let errorHistory = [];
+    let integralHistory = [];
+    let derivativeHistory = [];
+
+    Plotly.newPlot('chart', [
+        {
+            y: errorHistory,
+            type: 'line',
+            line: {color: '#FF0000'},
+        },
+        {
+            y: integralHistory,
+            type: 'line',
+            line: {color: '#2d9d15'},
+        },
+        {
+            y: derivativeHistory,
+            type: 'line',
+            line: {color: '#001aff'},
+        }
+    ], {
+        title: 'Error Over Time',
+        yaxis: {title: 'Error Value'},
+        showlegend: false
+    }, {
+        editable: false,
+        staticPlot: true,
+        displayModeBar: false,
+    });
+
+    function updatePlot() {
+        // Add new data points
+        errorHistory.push(error);
+        integralHistory.push(errorSum);
+        derivativeHistory.push((previous_error - error) / dt);
+
+        // Maintain fixed length
+        if (errorHistory.length > 200) {
+            errorHistory.shift();
+            integralHistory.shift();
+            derivativeHistory.shift();
+        }
+
+        // Update plot
+        Plotly.react('chart', [
+            {
+                y: errorHistory,
+                type: 'line',
+                line: {color: '#FF0000'},
+            },
+            {
+                y: integralHistory,
+                type: 'line',
+                line: {color: '#2d9d15'},
+            },
+            {
+                y: derivativeHistory,
+                type: 'line',
+                line: {color: '#001aff'},
+            }
+        ], {showlegend: false});
+    }
+
+    let cnt = 0;
+
+    setInterval(function () {
+        Plotly.extendTraces('chart', {y: [[error]]}, [0]);
+        cnt++;
+
+        if (cnt > 500) {
+            Plotly.relayout('chart', {
+                xaxis: {range: [cnt - 500, cnt]}
+            });
+        }
+    })
+
+    function loop() {
+        updatePhysics();
+        draw();
+        updatePlot();
+        requestAnimationFrame(loop);
+    }
+
+    loop();
 </script>
 </body>
 

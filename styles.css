@@ -1,0 +1,49 @@
+.controls {
+    display: grid;
+    grid-template-columns: 20% 30% 50%; /* First row with 3 columns (PID, Flick, Info) */
+    grid-template-rows: 10% 40% 40%; /* Two rows with content-based height */
+    gap: 10px; /* Space between items */
+    height: 100vh; /* Full screen height */
+}
+
+.title, .pid-controller, .chart, .flick_reset, .info {
+    background: #a7addf;
+    padding: 10px;
+    border: 1px solid black;
+}
+
+.title {
+    grid-column: 1 / span 3;
+    grid-row: 1;
+}
+
+.pid-controller {
+    grid-column: 1;
+    grid-row: 2;
+}
+
+.info {
+    grid-column: 2;
+    grid-row: 2;
+}
+
+#canvas {
+    grid-column: 1 / span 3; /* Spans across the first two columns */
+    grid-row: 3; /* Second row */
+    justify-self: center; /* Centers horizontally within its grid area */
+    align-self: center;   /* Centers vertically within its grid area */
+}
+
+#chart {
+    grid-column: 3; /* Placed in the third column of the second row */
+    grid-row: 2; /* Second row */
+    justify-self: center; /* Centers horizontally within its grid area */
+    align-self: center;   /* Centers vertically within its grid area */
+    width: 100%;  /* Make the chart take the full width of its container */
+    height: 100%; /* Adjust height if needed, e.g. 100vh or 300px */
+}
+
+body {
+    overflow-x: hidden; /* Prevent horizontal overflow */
+    overflow-y: hidden;
+}
