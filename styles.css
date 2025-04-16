@@ -1,7 +1,7 @@
 .controls {
     display: grid;
     grid-template-columns: 20% 30% 50%; /* First row with 3 columns (PID, Flick, Info) */
-    grid-template-rows: 10% 40% 40%; /* Two rows with content-based height */
+    grid-template-rows: 10% 45% 45%; /* Two rows with content-based height */
     gap: 10px; /* Space between items */
     height: 100vh; /* Full screen height */
 }
@@ -41,6 +41,17 @@
     align-self: center;   /* Centers vertically within its grid area */
     width: 100%;  /* Make the chart take the full width of its container */
     height: 100%; /* Adjust height if needed, e.g. 100vh or 300px */
+}
+
+.btn {
+    border: 1px solid black;
+    padding: 1px 2px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.btn:hover {
+    background-color: #6972a4;
 }
 
 body {

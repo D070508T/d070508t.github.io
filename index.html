@@ -13,39 +13,29 @@
 
 <div class="controls">
     <h1 class="title">WELCOME TO D070508T's PID CONTROLLER</h1>
-    <div class="pid-controller" style="
-         background: white;
-         height: 300px;
-         padding: 10px;
-         border: 1px solid black;">
+    <div class="pid-controller">
         <div class="proportional">
             <label for="kP">kP:</label>
             <input type="range" id="kP" value="0" step="0.001" min="0" max="1">
             kP: <span id="kPValue">0</span>
         </div>
-        <br>
         <div class="integral">
             <label for="kI">kI:</label>
             <input type="range" id="kI" value="0" step="0.001" min="0" max="0.5">
             kI: <span id="kIValue">0</span>
         </div>
-        <br>
         <div class="derivative">
             <label for="kD">kD:</label>
             <input type="range" id="kD" value="0" step="0.00001" min="0" max="0.01">
             kD: <span id="kDValue">0</span>
         </div>
-        <br>
         <div class="flick_reset">
-            <button id="flickLeft">Flick Left</button>
-            <button id="flickRight">Flick Right</button>
-            <br>
-            <button id="reset">Reset</button>
-            <br>
+            <button id="flickLeft" class="btn">Flick Left</button>
+            <button id="flickRight" class="btn">Flick Right</button>
+            <button id="reset" class="btn">Reset</button>
             <div class="center_of_mass">
-                <label for="COM">CENTER OF MASS:</label>
+                <label for="COM">CENTER OF MASS: <span id="COMValue">0</span></label>
                 <input type="range" id="COM" value="0" step="0.000001" min="0" max="0.001">
-                COM: <span id="COMValue">0</span>
             </div>
         </div>
     </div>
