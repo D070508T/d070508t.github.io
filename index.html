@@ -40,15 +40,19 @@
         </div>
     </div>
     <div style="border: 1px solid black;">
-        <div id="chart" style="height: 100%"></div>
+        <div id="chart"></div>
     </div>
     <pre class="info">
-        sdfsdfsdfsdf
-        dsfsd
-        fsdf
-        sdfsdfsdfsdf
-        fsd
-        fsdf
+A PID controller is a system used to keep things stable, like
+balancing a robot or keeping a motor at a set speed. It compares
+what’s happening to what should be happening, then adjusts in real
+time using three parts: proportional (how far off it is), integral
+(how long it’s been off), and derivative (how fast it’s changing).
+
+You’ll find PID controllers in drones, self-balancing bots, and
+industrial machines. To tune one, start with the proportional value
+and adjust until the system responds well. Add a bit of derivative
+to smooth things out, and use the integral term to fix steady drift.
     </pre>
     <canvas id="canvas" style="border: 2px solid black; width: 90%; height: 100%; display: block;"></canvas>
 </div>
@@ -241,6 +245,12 @@
         editable: false,
         staticPlot: true,
         displayModeBar: false,
+        margin: {
+            l: 3,  // left
+            r: 1,  // right
+            t: 3,  // top
+            b: 3   // bottom
+        }
     });
 
     function updatePlot() {
